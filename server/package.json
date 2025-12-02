@@ -4,7 +4,7 @@
   "type": "module",
   "main": "index.ts",
   "scripts": {
-    "dev": "ts-node index.ts"
+    "dev": "node --loader ts-node/esm index.ts"
   },
   "dependencies": {
     "@trpc/client": "^11.7.2",

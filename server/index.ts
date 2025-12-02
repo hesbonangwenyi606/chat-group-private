@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { createHTTPHandler } from "@trpc/server/adapters/standalone";
-import { z } from "zod";
 import { initTRPC } from "@trpc/server";
+import { z } from "zod";
 import http from "http";
 import { Server } from "socket.io";
 
@@ -10,18 +10,16 @@ import { Server } from "socket.io";
 const t = initTRPC.create();
 
 const appRouter = t.router({
-  getChannels: t.procedure.query(() => {
-    return [
-      { id: "1", name: "general", is_private: false, unread_count: 2 },
-      { id: "2", name: "random", is_private: false, unread_count: 0 },
-    ];
-  }),
+  getChannels: t.procedure.query(() => [
+    { id: "1", name: "general", is_private: false, unread_count: 2 },
+    { id: "2", name: "random", is_private: false, unread_count: 0 }
+  ]),
   createChannel: t.procedure
     .input(z.object({ name: z.string() }))
     .mutation(({ input }) => {
       console.log("Create channel:", input.name);
       return { id: Date.now().toString(), name: input.name, is_private: false, unread_count: 0 };
-    }),
+    })
 });
 
 // ---------------- Express ----------------

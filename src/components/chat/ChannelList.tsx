@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Hash, Plus, Lock, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Channel } from '@/types/chat';
+import React, { useState, useMemo } from "react";
+import { Hash, Plus, Lock, Search } from "lucide-react";
+import { Channel } from "@/types/chat";
 
 interface ChannelListProps {
   channels: Channel[];
@@ -16,24 +15,21 @@ export default function ChannelList({
   onSelectChannel,
   onCreateChannel,
 }: ChannelListProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
-  // SORTING: Unread → Private → Alphabetical
+  // SORT: unread → private → alphabetical
   const sortedChannels = useMemo(() => {
     return [...channels]
       .filter((c) =>
         c.name.toLowerCase().includes(search.toLowerCase())
       )
       .sort((a, b) => {
-        // unread first
         if ((b.unread_count ?? 0) !== (a.unread_count ?? 0)) {
           return (b.unread_count ?? 0) - (a.unread_count ?? 0);
         }
-        // private next
         if (a.is_private !== b.is_private) {
           return a.is_private ? -1 : 1;
         }
-        // alphabetical fallback
         return a.name.localeCompare(b.name);
       });
   }, [channels, search]);
@@ -61,55 +57,49 @@ export default function ChannelList({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search channels…"
           className="w-full pl-9 pr-3 py-2 bg-slate-800 text-sm text-slate-200 rounded-md 
-                     focus:outline-none focus:ring-1 focus:ring-violet-500"
+                     focus:outline-none focus:ring-1 focus:ring-violet-500 transition"
         />
       </div>
 
       {/* Channel List */}
       <div className="space-y-0.5">
-        <AnimatePresence>
-          {sortedChannels.map((channel) => (
-            <motion.button
-              key={channel.id}
-              onClick={() => onSelectChannel(channel)}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.15 }}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all group
-                ${
-                  activeChannelId === channel.id
-                    ? 'bg-violet-600 text-white shadow'
-                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                }
-              `}
-            >
-              {/* Icon */}
-              {channel.is_private ? (
-                <Lock className="w-4 h-4 flex-shrink-0" />
-              ) : (
-                <Hash className="w-4 h-4 flex-shrink-0" />
-              )}
+        {sortedChannels.map((channel) => (
+          <button
+            key={channel.id}
+            onClick={() => onSelectChannel(channel)}
+            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-150
+              ${
+                activeChannelId === channel.id
+                  ? "bg-violet-600 text-white shadow"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+              }
+              hover:scale-[1.02] active:scale-[0.98]
+            `}
+          >
+            {/* Icon */}
+            {channel.is_private ? (
+              <Lock className="w-4 h-4 flex-shrink-0" />
+            ) : (
+              <Hash className="w-4 h-4 flex-shrink-0" />
+            )}
 
-              {/* Name */}
-              <span className="truncate text-sm">{channel.name}</span>
+            {/* Channel Name */}
+            <span className="truncate text-sm">{channel.name}</span>
 
-              {/* UNREAD BADGE */}
-              {channel.unread_count && channel.unread_count > 0 && (
-                <motion.span
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                  className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 
-                             rounded-full min-w-[22px] text-center font-semibold animate-pulse"
-                >
-                  {channel.unread_count > 99 ? '99+' : channel.unread_count}
-                </motion.span>
-              )}
-            </motion.button>
-          ))}
-        </AnimatePresence>
+            {/* Unread Badge */}
+            {channel.unread_count && channel.unread_count > 0 && (
+              <span
+                className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded-full 
+                  min-w-[22px] text-center font-semibold 
+                  animate-pulse"
+              >
+                {channel.unread_count > 99 ? "99+" : channel.unread_count}
+              </span>
+            )}
+          </button>
+        ))}
 
+        {/* No results */}
         {sortedChannels.length === 0 && (
           <p className="text-center text-slate-500 text-sm py-4">
             No channels found

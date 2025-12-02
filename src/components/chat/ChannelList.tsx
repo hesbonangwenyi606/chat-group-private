@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Hash,
   Plus,
@@ -33,6 +33,8 @@ export default function ChannelList({
   const [search, setSearch] = useState("");
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const categories = useMemo(() => {
     const cats = new Set<string>();
@@ -76,6 +78,44 @@ export default function ChannelList({
     }));
   };
 
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Keyboard navigation for right-click menu
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!menuOpenId) return;
+
+      const menuItems = menuRef.current?.querySelectorAll<HTMLButtonElement>("button");
+      if (!menuItems || menuItems.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev + 1) % menuItems.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev - 1 + menuItems.length) % menuItems.length);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        menuItems[focusedIndex]?.click();
+        setMenuOpenId(null);
+      } else if (e.key === "Escape") {
+        setMenuOpenId(null);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpenId, focusedIndex]);
+
   const renderSkeleton = () => (
     <div className="space-y-2 mt-1">
       {Array.from({ length: 6 }).map((_, idx) => (
@@ -89,7 +129,7 @@ export default function ChannelList({
   );
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 relative">
       {/* Header */}
       <div className="flex items-center justify-between px-3 mb-2">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -156,6 +196,7 @@ export default function ChannelList({
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setMenuOpenId(channel.id);
+                          setFocusedIndex(0); // reset focus
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-150
                         ${
@@ -195,34 +236,30 @@ export default function ChannelList({
 
                       {/* Right-click menu */}
                       {menuOpenId === channel.id && (
-                        <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 rounded-md shadow-lg z-50">
-                          <button
-                            onClick={() => {
-                              onMarkAsRead?.(channel);
-                              setMenuOpenId(null);
-                            }}
-                            className="w-full text-left px-3 py-2 hover:bg-slate-700 transition"
-                          >
-                            Mark as Read
-                          </button>
-                          <button
-                            onClick={() => {
-                              onMuteChannel?.(channel);
-                              setMenuOpenId(null);
-                            }}
-                            className="w-full text-left px-3 py-2 hover:bg-slate-700 transition"
-                          >
-                            Mute Channel
-                          </button>
-                          <button
-                            onClick={() => {
-                              onDeleteChannel?.(channel);
-                              setMenuOpenId(null);
-                            }}
-                            className="w-full text-left px-3 py-2 hover:bg-red-600 hover:text-white transition"
-                          >
-                            Delete Channel
-                          </button>
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 top-full mt-1 w-40 bg-slate-800 rounded-md shadow-lg z-50 flex flex-col"
+                        >
+                          {["Mark as Read", "Mute Channel", "Delete Channel"].map(
+                            (label, idx) => (
+                              <button
+                                key={label}
+                                onClick={() => {
+                                  if (label === "Mark as Read") onMarkAsRead?.(channel);
+                                  else if (label === "Mute Channel") onMuteChannel?.(channel);
+                                  else if (label === "Delete Channel") onDeleteChannel?.(channel);
+                                  setMenuOpenId(null);
+                                }}
+                                className={`w-full text-left px-3 py-2 transition ${
+                                  idx === focusedIndex
+                                    ? "bg-slate-700 text-white"
+                                    : "hover:bg-slate-700"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            )
+                          )}
                         </div>
                       )}
                     </div>

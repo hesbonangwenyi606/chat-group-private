@@ -5,33 +5,32 @@ It provides fast development, HMR, clean structure, and support for Tailwind CSS
 
 🌟 Features
 
-⚡ Blazing-fast Vite dev server
+⚡ **Blazing-fast Vite dev server**
 
-🔧 TypeScript support
+🔧 **TypeScript support**
 
-🔄 Hot Module Replacement (HMR)
+🔄 **Hot Module Replacement (HMR)**
 
-🎨 Tailwind CSS-ready
+🎨 **Tailwind CSS-ready**
 
-🧹 ESLint for clean code
+🧹 **ESLint for clean code**
 
-📁 Simple and clean folder structure
+**Simple and clean folder structure**
 
-🚀 Getting Started
-1. Clone the repository
+### Getting Started
+Clone the repository
 git clone https://github.com/hesbonangwenyi606/<your-repo>.git
 cd <your-repo>
 
-2. Install dependencies
+### Install dependencies
 npm install
 
-3. Run the development server
+### Run the development server
 npm run dev
-
 
 Open in browser: http://localhost:5173
 
-📁 Project Structure
+## Project Structure
 /
 ├── public/              # Static assets
 ├── src/                 
@@ -43,16 +42,15 @@ Open in browser: http://localhost:5173
 ├── tsconfig.json        # TypeScript config
 └── tailwind.config.ts   # Tailwind config (if enabled)
 
-🔧 NPM Scripts
+## NPM Scripts
 Command	Description
 npm run dev	Start dev server
 npm run build	Build production files
 npm run preview	Preview production build
 npm run lint	Run ESLint
-📦 Production Build
+
+## Production Build
 npm run build
-
-
 Build output will be in the dist/ folder.
 
 ## License

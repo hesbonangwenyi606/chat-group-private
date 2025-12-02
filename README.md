@@ -1,6 +1,5 @@
-React + TypeScript + Vite Starter
-A sleek and modern starter project built with React, TypeScript, and Vite.
-It provides fast development, HMR, clean structure, and support for Tailwind CSS.
+## React + TypeScript + Vite
+This is a minimal starter template using React, TypeScript, and Vite. It includes fast development with HMR, basic ESLint rules, and support for Tailwind CSS if added.
 
 ## Features
 **Blazing-fast Vite dev server**

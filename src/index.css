@@ -1,10 +1,14 @@
-
+/* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* -----------------------------
+   Base CSS variables for colors
+----------------------------- */
 @layer base {
   :root {
     --background: 210 40% 98%;
@@ -85,11 +89,10 @@
     --sidebar-border: 215 25% 27%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
+  /* Global base styles */
   * {
-    @apply border-border;
+    @apply border-border; /* fixed custom border utility */
   }
 
   body {
@@ -101,6 +104,37 @@
   }
 }
 
+/* -----------------------------
+   Utilities
+----------------------------- */
+@layer utilities {
+  /* Custom border utility */
+  .border-border {
+    border-width: 1px;
+    border-color: hsl(var(--border));
+  }
+
+  /* Skeleton shimmer animation */
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+    background-size: 200% 100%;
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--border)),
+      hsl(var(--border) / 0.5),
+      hsl(var(--border))
+    );
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+}
+
+/* -----------------------------
+   Markdown Editor/Preview Styling
+----------------------------- */
 .markdown-editor {
   @apply font-mono text-base leading-relaxed;
 }

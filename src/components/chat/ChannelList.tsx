@@ -10,14 +10,14 @@ import {
 import { Channel } from "@/types/chat";
 
 interface ChannelListProps {
-  channels?: Channel[]; // optional for loading
+  channels?: Channel[];
   activeChannelId: string | null;
   onSelectChannel: (channel: Channel) => void;
   onCreateChannel: () => void;
   onDeleteChannel?: (channel: Channel) => void;
   onMuteChannel?: (channel: Channel) => void;
   onMarkAsRead?: (channel: Channel) => void;
-  loading?: boolean; // new prop
+  loading?: boolean;
 }
 
 export default function ChannelList({
@@ -34,7 +34,6 @@ export default function ChannelList({
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
-  // Extract unique categories
   const categories = useMemo(() => {
     const cats = new Set<string>();
     channels?.forEach((c) => cats.add(c.category || "Uncategorized"));
@@ -77,13 +76,13 @@ export default function ChannelList({
     }));
   };
 
-  // Skeleton loader for channels
   const renderSkeleton = () => (
-    <div className="space-y-1 mt-1">
+    <div className="space-y-2 mt-1">
       {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
-          className="h-8 bg-slate-700 rounded-md animate-pulse w-full"
+          className="h-8 w-full rounded-md bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 
+                     bg-[length:200%_100%] animate-shimmer"
         />
       ))}
     </div>
@@ -116,7 +115,7 @@ export default function ChannelList({
         />
       </div>
 
-      {/* Loading Skeleton */}
+      {/* Skeleton loader */}
       {loading && renderSkeleton()}
 
       {/* Channel Sections */}
@@ -194,7 +193,7 @@ export default function ChannelList({
                         )}
                       </button>
 
-                      {/* Right-Click Menu */}
+                      {/* Right-click menu */}
                       {menuOpenId === channel.id && (
                         <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 rounded-md shadow-lg z-50">
                           <button

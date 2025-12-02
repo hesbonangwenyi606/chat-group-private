@@ -1,5 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { Hash, Plus, Lock, Search, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Hash,
+  Plus,
+  Lock,
+  Search,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { Channel } from "@/types/chat";
 
 interface ChannelListProps {
@@ -7,6 +14,9 @@ interface ChannelListProps {
   activeChannelId: string | null;
   onSelectChannel: (channel: Channel) => void;
   onCreateChannel: () => void;
+  onDeleteChannel?: (channel: Channel) => void;
+  onMuteChannel?: (channel: Channel) => void;
+  onMarkAsRead?: (channel: Channel) => void;
 }
 
 export default function ChannelList({
@@ -14,9 +24,13 @@ export default function ChannelList({
   activeChannelId,
   onSelectChannel,
   onCreateChannel,
+  onDeleteChannel,
+  onMuteChannel,
+  onMarkAsRead,
 }: ChannelListProps) {
   const [search, setSearch] = useState("");
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   // Extract unique categories
   const categories = useMemo(() => {
@@ -25,7 +39,7 @@ export default function ChannelList({
     return Array.from(cats);
   }, [channels]);
 
-  // Sort and filter channels per section
+  // Sort and filter channels per category
   const getSortedChannels = (category: string) => {
     return channels
       .filter(
@@ -44,14 +58,7 @@ export default function ChannelList({
       });
   };
 
-  const toggleSection = (category: string) => {
-    setCollapsedSections((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
-  // Helper for status dot
+  // Status dot color
   const getStatusColor = (status?: "online" | "offline" | "away") => {
     switch (status) {
       case "online":
@@ -61,6 +68,13 @@ export default function ChannelList({
       default:
         return "bg-gray-500";
     }
+  };
+
+  const toggleSection = (category: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
   };
 
   return (
@@ -78,7 +92,7 @@ export default function ChannelList({
         </button>
       </div>
 
-      {/* Search Bar */}
+      {/* Search */}
       <div className="px-3 mb-3 relative">
         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
         <input
@@ -122,10 +136,14 @@ export default function ChannelList({
               >
                 <div className="space-y-0.5 mt-1">
                   {channelsInCategory.map((channel) => (
-                    <button
-                      key={channel.id}
-                      onClick={() => onSelectChannel(channel)}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-150
+                    <div key={channel.id} className="relative">
+                      <button
+                        onClick={() => onSelectChannel(channel)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setMenuOpenId(channel.id);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-150
                         ${
                           activeChannelId === channel.id
                             ? "bg-violet-600 text-white shadow"
@@ -133,38 +151,69 @@ export default function ChannelList({
                         }
                         hover:scale-[1.02] active:scale-[0.98]
                       `}
-                    >
-                      {/* Icon */}
-                      {channel.is_private ? (
-                        <Lock className="w-4 h-4 flex-shrink-0" />
-                      ) : (
-                        <Hash className="w-4 h-4 flex-shrink-0" />
-                      )}
-
-                      {/* Name */}
-                      <span className="truncate text-sm flex-1 flex items-center gap-2">
-                        {channel.name}
-
-                        {/* Online/Offline Dot */}
-                        {channel.status && (
-                          <span
-                            className={`w-2 h-2 rounded-full ${getStatusColor(
-                              channel.status
-                            )}`}
-                          />
+                      >
+                        {channel.is_private ? (
+                          <Lock className="w-4 h-4 flex-shrink-0" />
+                        ) : (
+                          <Hash className="w-4 h-4 flex-shrink-0" />
                         )}
-                      </span>
 
-                      {/* Unread Badge */}
-                      {channel.unread_count && channel.unread_count > 0 && (
-                        <span
-                          className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded-full 
-                            min-w-[22px] text-center font-semibold animate-pulse"
-                        >
-                          {channel.unread_count > 99 ? "99+" : channel.unread_count}
+                        {/* Name + Status */}
+                        <span className="truncate text-sm flex-1 flex items-center gap-2">
+                          {channel.name}
+                          {channel.status && (
+                            <span
+                              className={`w-2 h-2 rounded-full ${getStatusColor(
+                                channel.status
+                              )}`}
+                            />
+                          )}
                         </span>
+
+                        {/* Unread Badge */}
+                        {channel.unread_count && channel.unread_count > 0 && (
+                          <span
+                            className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded-full 
+                            min-w-[22px] text-center font-semibold animate-pulse"
+                          >
+                            {channel.unread_count > 99 ? "99+" : channel.unread_count}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Context Menu */}
+                      {menuOpenId === channel.id && (
+                        <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 rounded-md shadow-lg z-50">
+                          <button
+                            onClick={() => {
+                              onMarkAsRead?.(channel);
+                              setMenuOpenId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-slate-700 transition"
+                          >
+                            Mark as Read
+                          </button>
+                          <button
+                            onClick={() => {
+                              onMuteChannel?.(channel);
+                              setMenuOpenId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-slate-700 transition"
+                          >
+                            Mute Channel
+                          </button>
+                          <button
+                            onClick={() => {
+                              onDeleteChannel?.(channel);
+                              setMenuOpenId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-red-600 hover:text-white transition"
+                          >
+                            Delete Channel
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -174,8 +223,8 @@ export default function ChannelList({
       </div>
 
       {/* No channels found */}
-      {channels.filter((c) => c.name.toLowerCase().includes(search.toLowerCase())).length ===
-        0 && (
+      {channels.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+        .length === 0 && (
         <p className="text-center text-slate-500 text-sm py-4">No channels found</p>
       )}
     </div>

@@ -1,3 +1,5 @@
+// Barrel file to export all components from one place
+
 export { default as UserAvatar } from './UserAvatar';
 export { default as ChannelList } from './ChannelList';
 export { default as DirectMessageList } from './DirectMessageList';

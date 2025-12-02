@@ -25,7 +25,7 @@ export default function ChannelList({
     return Array.from(cats);
   }, [channels]);
 
-  // Filtered & sorted channels per section
+  // Sort and filter channels per section
   const getSortedChannels = (category: string) => {
     return channels
       .filter(
@@ -34,15 +34,12 @@ export default function ChannelList({
           c.name.toLowerCase().includes(search.toLowerCase())
       )
       .sort((a, b) => {
-        // Unread first
         if ((b.unread_count ?? 0) !== (a.unread_count ?? 0)) {
           return (b.unread_count ?? 0) - (a.unread_count ?? 0);
         }
-        // Private next
         if (a.is_private !== b.is_private) {
           return a.is_private ? -1 : 1;
         }
-        // Alphabetical fallback
         return a.name.localeCompare(b.name);
       });
   };
@@ -52,6 +49,18 @@ export default function ChannelList({
       ...prev,
       [category]: !prev[category],
     }));
+  };
+
+  // Helper for status dot
+  const getStatusColor = (status?: "online" | "offline" | "away") => {
+    switch (status) {
+      case "online":
+        return "bg-green-500";
+      case "away":
+        return "bg-yellow-400";
+      default:
+        return "bg-gray-500";
+    }
   };
 
   return (
@@ -133,7 +142,18 @@ export default function ChannelList({
                       )}
 
                       {/* Name */}
-                      <span className="truncate text-sm">{channel.name}</span>
+                      <span className="truncate text-sm flex-1 flex items-center gap-2">
+                        {channel.name}
+
+                        {/* Online/Offline Dot */}
+                        {channel.status && (
+                          <span
+                            className={`w-2 h-2 rounded-full ${getStatusColor(
+                              channel.status
+                            )}`}
+                          />
+                        )}
+                      </span>
 
                       {/* Unread Badge */}
                       {channel.unread_count && channel.unread_count > 0 && (

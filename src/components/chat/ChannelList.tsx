@@ -10,13 +10,14 @@ import {
 import { Channel } from "@/types/chat";
 
 interface ChannelListProps {
-  channels: Channel[];
+  channels?: Channel[]; // optional for loading
   activeChannelId: string | null;
   onSelectChannel: (channel: Channel) => void;
   onCreateChannel: () => void;
   onDeleteChannel?: (channel: Channel) => void;
   onMuteChannel?: (channel: Channel) => void;
   onMarkAsRead?: (channel: Channel) => void;
+  loading?: boolean; // new prop
 }
 
 export default function ChannelList({
@@ -27,6 +28,7 @@ export default function ChannelList({
   onDeleteChannel,
   onMuteChannel,
   onMarkAsRead,
+  loading = false,
 }: ChannelListProps) {
   const [search, setSearch] = useState("");
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -35,14 +37,13 @@ export default function ChannelList({
   // Extract unique categories
   const categories = useMemo(() => {
     const cats = new Set<string>();
-    channels.forEach((c) => cats.add(c.category || "Uncategorized"));
+    channels?.forEach((c) => cats.add(c.category || "Uncategorized"));
     return Array.from(cats);
   }, [channels]);
 
-  // Sort and filter channels per category
   const getSortedChannels = (category: string) => {
     return channels
-      .filter(
+      ?.filter(
         (c) =>
           (c.category || "Uncategorized") === category &&
           c.name.toLowerCase().includes(search.toLowerCase())
@@ -55,10 +56,9 @@ export default function ChannelList({
           return a.is_private ? -1 : 1;
         }
         return a.name.localeCompare(b.name);
-      });
+      }) || [];
   };
 
-  // Status dot color
   const getStatusColor = (status?: "online" | "offline" | "away") => {
     switch (status) {
       case "online":
@@ -76,6 +76,18 @@ export default function ChannelList({
       [category]: !prev[category],
     }));
   };
+
+  // Skeleton loader for channels
+  const renderSkeleton = () => (
+    <div className="space-y-1 mt-1">
+      {Array.from({ length: 6 }).map((_, idx) => (
+        <div
+          key={idx}
+          className="h-8 bg-slate-700 rounded-md animate-pulse w-full"
+        />
+      ))}
+    </div>
+  );
 
   return (
     <div className="mb-4">
@@ -104,9 +116,12 @@ export default function ChannelList({
         />
       </div>
 
+      {/* Loading Skeleton */}
+      {loading && renderSkeleton()}
+
       {/* Channel Sections */}
-      <div className="space-y-2">
-        {categories.map((category) => {
+      {!loading &&
+        categories.map((category) => {
           const channelsInCategory = getSortedChannels(category);
           if (channelsInCategory.length === 0) return null;
 
@@ -158,7 +173,6 @@ export default function ChannelList({
                           <Hash className="w-4 h-4 flex-shrink-0" />
                         )}
 
-                        {/* Name + Status */}
                         <span className="truncate text-sm flex-1 flex items-center gap-2">
                           {channel.name}
                           {channel.status && (
@@ -170,7 +184,6 @@ export default function ChannelList({
                           )}
                         </span>
 
-                        {/* Unread Badge */}
                         {channel.unread_count && channel.unread_count > 0 && (
                           <span
                             className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded-full 
@@ -181,7 +194,7 @@ export default function ChannelList({
                         )}
                       </button>
 
-                      {/* Context Menu */}
+                      {/* Right-Click Menu */}
                       {menuOpenId === channel.id && (
                         <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 rounded-md shadow-lg z-50">
                           <button
@@ -220,13 +233,14 @@ export default function ChannelList({
             </div>
           );
         })}
-      </div>
 
       {/* No channels found */}
-      {channels.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-        .length === 0 && (
-        <p className="text-center text-slate-500 text-sm py-4">No channels found</p>
-      )}
+      {!loading &&
+        channels &&
+        channels.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+          .length === 0 && (
+          <p className="text-center text-slate-500 text-sm py-4">No channels found</p>
+        )}
     </div>
   );
 }

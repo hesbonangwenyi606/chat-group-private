@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Hash, Plus, Lock, Search } from "lucide-react";
+import { Hash, Plus, Lock, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { Channel } from "@/types/chat";
 
 interface ChannelListProps {
@@ -16,23 +16,43 @@ export default function ChannelList({
   onCreateChannel,
 }: ChannelListProps) {
   const [search, setSearch] = useState("");
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  // SORT: unread → private → alphabetical
-  const sortedChannels = useMemo(() => {
-    return [...channels]
-      .filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase())
+  // Extract unique categories
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    channels.forEach((c) => cats.add(c.category || "Uncategorized"));
+    return Array.from(cats);
+  }, [channels]);
+
+  // Filtered & sorted channels per section
+  const getSortedChannels = (category: string) => {
+    return channels
+      .filter(
+        (c) =>
+          (c.category || "Uncategorized") === category &&
+          c.name.toLowerCase().includes(search.toLowerCase())
       )
       .sort((a, b) => {
+        // Unread first
         if ((b.unread_count ?? 0) !== (a.unread_count ?? 0)) {
           return (b.unread_count ?? 0) - (a.unread_count ?? 0);
         }
+        // Private next
         if (a.is_private !== b.is_private) {
           return a.is_private ? -1 : 1;
         }
+        // Alphabetical fallback
         return a.name.localeCompare(b.name);
       });
-  }, [channels, search]);
+  };
+
+  const toggleSection = (category: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
 
   return (
     <div className="mb-4">
@@ -61,51 +81,83 @@ export default function ChannelList({
         />
       </div>
 
-      {/* Channel List */}
-      <div className="space-y-0.5">
-        {sortedChannels.map((channel) => (
-          <button
-            key={channel.id}
-            onClick={() => onSelectChannel(channel)}
-            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-150
-              ${
-                activeChannelId === channel.id
-                  ? "bg-violet-600 text-white shadow"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
-              }
-              hover:scale-[1.02] active:scale-[0.98]
-            `}
-          >
-            {/* Icon */}
-            {channel.is_private ? (
-              <Lock className="w-4 h-4 flex-shrink-0" />
-            ) : (
-              <Hash className="w-4 h-4 flex-shrink-0" />
-            )}
+      {/* Channel Sections */}
+      <div className="space-y-2">
+        {categories.map((category) => {
+          const channelsInCategory = getSortedChannels(category);
+          if (channelsInCategory.length === 0) return null;
 
-            {/* Channel Name */}
-            <span className="truncate text-sm">{channel.name}</span>
+          const isCollapsed = collapsedSections[category] ?? false;
 
-            {/* Unread Badge */}
-            {channel.unread_count && channel.unread_count > 0 && (
-              <span
-                className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded-full 
-                  min-w-[22px] text-center font-semibold 
-                  animate-pulse"
+          return (
+            <div key={category} className="space-y-1">
+              {/* Section Header */}
+              <button
+                onClick={() => toggleSection(category)}
+                className="w-full flex items-center justify-between px-3 py-1.5 bg-slate-700/20 text-slate-300 rounded-md
+                           hover:bg-slate-700/50 transition-colors font-semibold text-sm"
               >
-                {channel.unread_count > 99 ? "99+" : channel.unread_count}
-              </span>
-            )}
-          </button>
-        ))}
+                <span>{category}</span>
+                {isCollapsed ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
 
-        {/* No results */}
-        {sortedChannels.length === 0 && (
-          <p className="text-center text-slate-500 text-sm py-4">
-            No channels found
-          </p>
-        )}
+              {/* Channels */}
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  isCollapsed ? "max-h-0" : "max-h-[1000px]"
+                }`}
+              >
+                <div className="space-y-0.5 mt-1">
+                  {channelsInCategory.map((channel) => (
+                    <button
+                      key={channel.id}
+                      onClick={() => onSelectChannel(channel)}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-150
+                        ${
+                          activeChannelId === channel.id
+                            ? "bg-violet-600 text-white shadow"
+                            : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                        }
+                        hover:scale-[1.02] active:scale-[0.98]
+                      `}
+                    >
+                      {/* Icon */}
+                      {channel.is_private ? (
+                        <Lock className="w-4 h-4 flex-shrink-0" />
+                      ) : (
+                        <Hash className="w-4 h-4 flex-shrink-0" />
+                      )}
+
+                      {/* Name */}
+                      <span className="truncate text-sm">{channel.name}</span>
+
+                      {/* Unread Badge */}
+                      {channel.unread_count && channel.unread_count > 0 && (
+                        <span
+                          className="ml-auto bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded-full 
+                            min-w-[22px] text-center font-semibold animate-pulse"
+                        >
+                          {channel.unread_count > 99 ? "99+" : channel.unread_count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {/* No channels found */}
+      {channels.filter((c) => c.name.toLowerCase().includes(search.toLowerCase())).length ===
+        0 && (
+        <p className="text-center text-slate-500 text-sm py-4">No channels found</p>
+      )}
     </div>
   );
 }
